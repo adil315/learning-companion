@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: learning-companion-backend
+    runtime: python
+    repo: https://github.com/adil315/learning-companion.git
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: MONGO_URI
+        sync: false
+      - key: GOOGLE_APPLICATION_CREDENTIALS
+        value: /etc/secrets/firebase-key.json
