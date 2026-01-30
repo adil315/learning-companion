@@ -46,7 +46,7 @@ interface CodingChallenge {
     hint: string;
 }
 
-const BACKEND_URL = 'http://localhost:5000';
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
 
 // Reusable fetch with retry logic and exponential backoff
 const fetchWithRetry = async (

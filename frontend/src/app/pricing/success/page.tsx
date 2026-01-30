@@ -6,7 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Crown, CheckCircle, Loader2, XCircle } from 'lucide-react';
 import '../pricing.css';
 
-const BACKEND_URL = 'http://localhost:5000';
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
 
 function SuccessContent() {
     const { user } = useAuth();

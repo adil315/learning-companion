@@ -8,7 +8,7 @@
  * - Request timeout handling
  */
 
-const BACKEND_URL = 'http://localhost:5000';
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
 
 // In-flight request tracking for deduplication
 const inFlightRequests: Map<string, Promise<Response>> = new Map();

@@ -8,6 +8,8 @@ import { Edge, Node } from '@xyflow/react';
 import { ArrowLeft, Loader2, Sparkles, Trophy, Map, Zap } from 'lucide-react';
 import AITutorChat from '@/components/AITutorChat';
 
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
+
 interface JourneyPageProps {
     params: Promise<{
         journeyId: string;
@@ -168,7 +170,7 @@ export default function JourneyPage({ params }: JourneyPageProps) {
                 }
             }
 
-            const response = await fetch('http://localhost:5000/api/journey/expand', {
+            const response = await fetch(`${BACKEND_URL}/api/journey/expand`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

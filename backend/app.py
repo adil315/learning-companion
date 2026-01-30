@@ -14,6 +14,7 @@ from flask_cors import CORS
 from google.adk.runners import InMemoryRunner
 from google.genai import types
 import uuid
+import os
 import json
 import re
 import asyncio
@@ -54,9 +55,11 @@ import paypal
 from firebase_admin import auth as firebase_auth
 
 app = Flask(__name__)
+# CORS configuration
+frontend_url = os.getenv("FRONTEND_URL", "http://localhost:3000")
 CORS(app, resources={
     r"/api/*": {
-        "origins": ["http://localhost:3000", "http://127.0.0.1:3000"],
+        "origins": [frontend_url, "http://localhost:3000", "http://127.0.0.1:3000"],
         "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
         "allow_headers": ["Content-Type", "Authorization"]
     }

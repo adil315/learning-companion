@@ -4,6 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { X, ArrowDown, ArrowRight, Loader2, Sparkles, Search } from 'lucide-react';
 import clsx from 'clsx';
 
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
+
 interface ExpansionModalProps {
     isOpen: boolean;
     onClose: () => void;
@@ -41,7 +43,7 @@ export default function ExpansionModal({
     const fetchSuggestions = async () => {
         setLoadingSuggestions(true);
         try {
-            const response = await fetch('http://localhost:5000/api/journey/suggest-topics', {
+            const response = await fetch(`${BACKEND_URL}/api/journey/suggest-topics`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
