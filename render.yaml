@@ -1,6 +1,7 @@
 services:
   - type: web
     name: learning-companion-backend
+    plan: free
     runtime: python
     repo: https://github.com/adil315/learning-companion.git
     rootDir: backend
