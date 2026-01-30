@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { Crown, Check, Zap, ArrowLeft, Loader2, Sparkles } from 'lucide-react';
@@ -32,7 +32,8 @@ const features = [
     'No daily limits',
 ];
 
-export default function PricingPage() {
+// Move main logic to a child component to allow Suspense wrapping
+function PricingContent() {
     const { user } = useAuth();
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -149,8 +150,8 @@ export default function PricingPage() {
                     <div className="bg-white/5 p-1 rounded-full border border-white/10 flex relative">
                         <button
                             className={`px-6 py-2 rounded-full text-sm font-medium transition-all ${selectedPlan === 'monthly'
-                                    ? 'bg-purple-600 text-white shadow-lg'
-                                    : 'text-gray-400 hover:text-white'
+                                ? 'bg-purple-600 text-white shadow-lg'
+                                : 'text-gray-400 hover:text-white'
                                 }`}
                             onClick={() => setSelectedPlan('monthly')}
                         >
@@ -158,8 +159,8 @@ export default function PricingPage() {
                         </button>
                         <button
                             className={`px-6 py-2 rounded-full text-sm font-medium transition-all flex items-center gap-2 ${selectedPlan === 'yearly'
-                                    ? 'bg-purple-600 text-white shadow-lg'
-                                    : 'text-gray-400 hover:text-white'
+                                ? 'bg-purple-600 text-white shadow-lg'
+                                : 'text-gray-400 hover:text-white'
                                 }`}
                             onClick={() => setSelectedPlan('yearly')}
                         >
@@ -252,5 +253,13 @@ export default function PricingPage() {
                 </div>
             </div>
         </div>
+    );
+}
+
+export default function PricingPage() {
+    return (
+        <Suspense fallback={<div className="min-h-screen bg-[#0a0015] flex items-center justify-center text-white"><Loader2 className="animate-spin" size={48} /></div>}>
+            <PricingContent />
+        </Suspense>
     );
 }

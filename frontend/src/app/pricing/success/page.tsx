@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { Crown, CheckCircle, Loader2, XCircle } from 'lucide-react';
@@ -8,24 +8,24 @@ import '../pricing.css';
 
 const BACKEND_URL = 'http://localhost:5000';
 
-export default function SubscriptionSuccessPage() {
-    const { user, token } = useAuth();
+function SuccessContent() {
+    const { user } = useAuth();
     const router = useRouter();
     const searchParams = useSearchParams();
     const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
     const [message, setMessage] = useState('Activating your Pro subscription...');
 
     useEffect(() => {
-        activateSubscription();
-    }, [token]);
+        if (user) {
+            activateSubscription();
+        }
+    }, [user]);
 
     const activateSubscription = async () => {
-        if (!token) {
-            // Wait for auth to load
-            return;
-        }
+        if (!user) return;
 
         try {
+            const token = await user.getIdToken();
             // Get subscription details from session storage
             const pendingData = sessionStorage.getItem('pending_subscription');
             if (!pendingData) {
@@ -142,5 +142,13 @@ export default function SubscriptionSuccessPage() {
                 </div>
             </div>
         </div>
+    );
+}
+
+export default function SubscriptionSuccessPage() {
+    return (
+        <Suspense fallback={<div className="min-h-screen bg-[#0a0015] flex items-center justify-center"><Loader2 className="animate-spin text-white" size={48} /></div>}>
+            <SuccessContent />
+        </Suspense>
     );
 }
