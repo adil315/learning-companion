@@ -88,13 +88,14 @@ limiter = Limiter(
     storage_uri="memory://",
 )
 
-# Caches with TTL (time-to-live in seconds)
-user_cache = TTLCache(maxsize=1000, ttl=300)  # 5 minutes
-badge_cache = TTLCache(maxsize=10, ttl=3600)  # 1 hour
-lesson_cache = TTLCache(maxsize=500, ttl=1800)  # 30 minutes
+# Caches with TTL (time-to-live in seconds) - Optimized for 512MB RAM
+user_cache = TTLCache(maxsize=100, ttl=300)  # Reduced from 1000
+badge_cache = TTLCache(maxsize=10, ttl=3600)
+lesson_cache = TTLCache(maxsize=50, ttl=1800)  # Reduced from 500
 
-# Thread pool for background jobs (increased from 4 to 8)
-executor = ThreadPoolExecutor(max_workers=8)
+# Thread pool for background jobs
+# CRITICAL: Reduced to 2 workers to prevent OOM on Render Free Tier
+executor = ThreadPoolExecutor(max_workers=2)
 
 # In-memory storage for active diagnostic sessions
 # Format: { session_id: { "runner": InMemoryRunner, "adk_session_id": str, "topic": str } }
