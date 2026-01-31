@@ -114,6 +114,29 @@ export default function DashboardPage() {
         }
     }, [user]);
 
+    // Debug active configuration
+    const [debugInfo, setDebugInfo] = useState<{
+        url: string;
+        error: string | null;
+        tokenStatus: string;
+    }>({
+        url: BACKEND_URL,
+        error: null,
+        tokenStatus: 'Checking...'
+    });
+
+    useEffect(() => {
+        if (user) {
+            user.getIdToken().then(() => {
+                setDebugInfo(prev => ({ ...prev, tokenStatus: 'Valid' }));
+            }).catch(err => {
+                setDebugInfo(prev => ({ ...prev, tokenStatus: `Error: ${err.message}` }));
+            });
+        } else {
+            setDebugInfo(prev => ({ ...prev, tokenStatus: 'No User' }));
+        }
+    }, [user]);
+
     // Fetch due flashcards
     useEffect(() => {
         const fetchDueCards = async () => {
@@ -741,67 +764,75 @@ export default function DashboardPage() {
                         <div className="flex items-center justify-center py-12">
                             <div className="w-8 h-8 border-3 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
                         </div>
-                    ) : journeys.length === 0 ? (
+                    ) : (
                         <div className="text-center py-10 md:py-12 text-gray-500">
                             <Trophy className="w-12 h-12 md:w-16 md:h-16 mx-auto mb-4 text-gray-600" />
                             <p className="text-base md:text-lg">No quests yet!</p>
                             <p className="text-sm">Create your first learning journey to get started.</p>
+
+                            {/* Debug Info Panel - Remove after fixing */}
+                            <div className="mt-8 p-4 bg-gray-900 border border-gray-700 rounded-lg text-left text-xs font-mono text-gray-400 max-w-md mx-auto">
+                                <p className="font-bold text-gray-300 mb-2">Debug Info:</p>
+                                <p>Backend URL: <span className="text-yellow-400">{debugInfo.url}</span></p>
+                                <p>Auth Token: <span className={debugInfo.tokenStatus === 'Valid' ? 'text-green-400' : 'text-red-400'}>{debugInfo.tokenStatus}</span></p>
+                                <p>Env Var: {process.env.NEXT_PUBLIC_BACKEND_URL ? 'Set' : 'Missing'}</p>
+                            </div>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-                            {journeys.map((journey) => (
-                                <div
-                                    key={journey.id}
-                                    onClick={() => {
-                                        // Store journey data in sessionStorage before navigating
-                                        sessionStorage.setItem(`journey-${journey.id}`, JSON.stringify({
-                                            journey_id: journey.id,
-                                            topic: journey.topic,
-                                            mode: journey.mode,
-                                            nodes: journey.nodes || [],
-                                            completedNodes: journey.completedNodes || [],
-                                            nodeProgress: journey.nodeProgress || {}
-                                        }));
-                                        router.push(`/journey/${journey.id}`);
-                                    }}
-                                    className="p-4 md:p-6 bg-purple-500/5 border border-purple-500/20 rounded-2xl hover:border-purple-500/40 hover:bg-purple-500/10 transition-all duration-300 cursor-pointer group"
-                                >
-                                    <div className="flex items-start justify-between mb-3 md:mb-4">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 md:w-12 md:h-12 bg-purple-500/20 rounded-xl flex items-center justify-center text-purple-400 group-hover:bg-purple-500/30 transition-colors">
-                                                <BookOpen className="w-5 h-5 md:w-6 md:h-6" />
-                                            </div>
-                                            <div>
-                                                <h3 className="font-semibold text-base md:text-lg line-clamp-1">{journey.topic}</h3>
-                                                <div className="flex items-center gap-2 text-sm text-gray-500">
-                                                    <span className="capitalize">{journey.mode}</span>
-                                                    <span>•</span>
-                                                    <span>{journey.nodes?.length || 0} modules</span>
-                                                </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+                        {journeys.map((journey) => (
+                            <div
+                                key={journey.id}
+                                onClick={() => {
+                                    // Store journey data in sessionStorage before navigating
+                                    sessionStorage.setItem(`journey-${journey.id}`, JSON.stringify({
+                                        journey_id: journey.id,
+                                        topic: journey.topic,
+                                        mode: journey.mode,
+                                        nodes: journey.nodes || [],
+                                        completedNodes: journey.completedNodes || [],
+                                        nodeProgress: journey.nodeProgress || {}
+                                    }));
+                                    router.push(`/journey/${journey.id}`);
+                                }}
+                                className="p-4 md:p-6 bg-purple-500/5 border border-purple-500/20 rounded-2xl hover:border-purple-500/40 hover:bg-purple-500/10 transition-all duration-300 cursor-pointer group"
+                            >
+                                <div className="flex items-start justify-between mb-3 md:mb-4">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 md:w-12 md:h-12 bg-purple-500/20 rounded-xl flex items-center justify-center text-purple-400 group-hover:bg-purple-500/30 transition-colors">
+                                            <BookOpen className="w-5 h-5 md:w-6 md:h-6" />
+                                        </div>
+                                        <div>
+                                            <h3 className="font-semibold text-base md:text-lg line-clamp-1">{journey.topic}</h3>
+                                            <div className="flex items-center gap-2 text-sm text-gray-500">
+                                                <span className="capitalize">{journey.mode}</span>
+                                                <span>•</span>
+                                                <span>{journey.nodes?.length || 0} modules</span>
                                             </div>
                                         </div>
                                     </div>
-
-                                    {/* Progress Bar */}
-                                    <div className="mb-3">
-                                        <div className="flex items-center justify-between text-sm mb-1">
-                                            <span className="text-gray-400">Progress</span>
-                                            <span className="text-purple-400 font-medium">{getProgressPercentage(journey)}%</span>
-                                        </div>
-                                        <div className="h-2 bg-purple-900/50 rounded-full overflow-hidden">
-                                            <div
-                                                className="h-full bg-gradient-to-r from-purple-500 to-pink-500 rounded-full transition-all duration-500"
-                                                style={{ width: `${getProgressPercentage(journey)}%` }}
-                                            ></div>
-                                        </div>
-                                    </div>
-
-                                    <button className="w-full py-2.5 bg-purple-500/20 hover:bg-purple-500/30 rounded-xl text-purple-300 font-medium flex items-center justify-center gap-2 transition-colors">
-                                        Continue Quest <ChevronRight className="w-4 h-4" />
-                                    </button>
                                 </div>
-                            ))}
-                        </div>
+
+                                {/* Progress Bar */}
+                                <div className="mb-3">
+                                    <div className="flex items-center justify-between text-sm mb-1">
+                                        <span className="text-gray-400">Progress</span>
+                                        <span className="text-purple-400 font-medium">{getProgressPercentage(journey)}%</span>
+                                    </div>
+                                    <div className="h-2 bg-purple-900/50 rounded-full overflow-hidden">
+                                        <div
+                                            className="h-full bg-gradient-to-r from-purple-500 to-pink-500 rounded-full transition-all duration-500"
+                                            style={{ width: `${getProgressPercentage(journey)}%` }}
+                                        ></div>
+                                    </div>
+                                </div>
+
+                                <button className="w-full py-2.5 bg-purple-500/20 hover:bg-purple-500/30 rounded-xl text-purple-300 font-medium flex items-center justify-center gap-2 transition-colors">
+                                    Continue Quest <ChevronRight className="w-4 h-4" />
+                                </button>
+                            </div>
+                        ))}
+                    </div>
                     )}
                 </div>
             </main>
