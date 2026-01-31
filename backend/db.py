@@ -658,6 +658,7 @@ def get_due_flashcards(user_id: str, limit: int = 10) -> List[Dict[str, Any]]:
         cards = []
         for doc in cursor:
             doc["id"] = str(doc["_id"])
+            doc["_id"] = str(doc["_id"])
             cards.append(doc)
         return cards
     except Exception as e:
