@@ -2137,10 +2137,28 @@ Return ONLY a JSON array of steps:
 @limiter.exempt  # Don't rate limit health checks
 def health_check():
     """Comprehensive health check endpoint for monitoring."""
-    import sys
+    import firebase_admin
+    from firebase_admin import credentials
+    
+    firebase_status = {
+        "initialized": len(firebase_admin._apps) > 0,
+        "project_id": "unknown"
+    }
+    
+    try:
+        if firebase_status["initialized"]:
+            app = firebase_admin.get_app()
+            if app.credential and isinstance(app.credential, credentials.Certificate):
+                 firebase_status["project_id"] = app.credential.project_id
+            elif os.getenv("GOOGLE_CLOUD_PROJECT"):
+                 firebase_status["project_id"] = os.getenv("GOOGLE_CLOUD_PROJECT")
+    except Exception as e:
+        firebase_status["error"] = str(e)
+
     return jsonify({
         "status": "healthy",
         "version": "2.2.0",
+        "firebase": firebase_status,
         "python_version": sys.version.split()[0],
         "features": {
             "async_jobs": True,
@@ -2149,7 +2167,7 @@ def health_check():
             "ai_agents": ["diagnostic", "journey_planner", "lesson", "quiz", "srs", "tutor"]
         },
         "performance": {
-            "worker_threads": 8,
+            "worker_threads": 2, # Corrected to match actual config
             "cache_sizes": {
                 "user_cache": len(user_cache),
                 "lesson_cache": len(lesson_cache)
