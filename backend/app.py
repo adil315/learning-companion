@@ -56,10 +56,15 @@ from firebase_admin import auth as firebase_auth
 
 app = Flask(__name__)
 # CORS configuration
+# CORS configuration
 frontend_url = os.getenv("FRONTEND_URL", "http://localhost:3000")
+origins = [frontend_url, "https://learning-companion-five.vercel.app", "http://localhost:3000", "http://127.0.0.1:3000"]
+# Filter out None/Empty
+origins = [o for o in origins if o]
+
 CORS(app, resources={
     r"/api/*": {
-        "origins": [frontend_url, "http://localhost:3000", "http://127.0.0.1:3000"],
+        "origins": origins,
         "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
         "allow_headers": ["Content-Type", "Authorization"]
     }
