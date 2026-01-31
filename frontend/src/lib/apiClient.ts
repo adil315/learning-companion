@@ -207,7 +207,7 @@ export const api = {
     /**
      * Generate lesson (no caching - each generation is unique)
      */
-    generateLesson: (data: {
+    generateLesson: (token: string, data: {
         title: string;
         user_level: string;
         context: string;
@@ -216,19 +216,21 @@ export const api = {
         step_id: string;
     }) => apiFetch('/api/lesson/generate', {
         method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
         body: JSON.stringify(data),
     }, { timeout: 60000, maxRetries: 2 }),  // Longer timeout for AI generation
 
     /**
      * Generate quiz
      */
-    generateQuiz: (data: {
+    generateQuiz: (token: string, data: {
         type: 'mcq' | 'coding';
         lesson_content: string;
         step_title: string;
         difficulty: string;
     }) => apiFetch('/api/quiz/generate', {
         method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
         body: JSON.stringify(data),
     }, { timeout: 45000, maxRetries: 2 }),
 

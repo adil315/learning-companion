@@ -322,12 +322,17 @@ export default function ModulePage({ params }: { params: Promise<{ nodeId: strin
                 try {
                     console.log(`[Module] Fetching lesson from API for: ${step.title} (attempt ${attempt}/${maxRetries})`);
 
+                    const token = user ? await user.getIdToken() : '';
+
                     const controller = new AbortController();
                     const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
 
                     const response = await fetch(`${BACKEND_URL}/api/lesson/generate`, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
                         body: JSON.stringify({
                             title: step.title,
                             user_level: step.difficulty === 'Easy' ? 'Beginner' : step.difficulty === 'Medium' ? 'Intermediate' : 'Advanced',
