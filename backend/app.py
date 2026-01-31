@@ -400,7 +400,10 @@ def verify_firebase_token(request):
         return decoded_token, None
     except Exception as e:
         print(f"[AUTH] Token verification failed: {e}")
-        return None, str(e)
+        error_msg = str(e)
+        if "app not initialized" in error_msg.lower() or "certificate" in error_msg.lower():
+            return None, f"Server Auth Config Error: {error_msg} (Check FIREBASE_CREDENTIALS_JSON)"
+        return None, error_msg
 
 
 @app.route('/api/user/profile', methods=['GET'])

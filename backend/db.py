@@ -22,13 +22,30 @@ def initialize_firebase():
     """Initialize Firebase Admin SDK for Authentication."""
     try:
         if not firebase_admin._apps:
-            # Use default credentials (GOOGLE_APPLICATION_CREDENTIALS env var)
+            # OPTION 1: Try GOOGLE_APPLICATION_CREDENTIALS (File path)
+            # This is handled automatically by ApplicationDefault() if env var is set
+            
+            # OPTION 2: Try FIREBASE_CREDENTIALS_JSON (Raw JSON string)
+            # Useful for Render/Heroku where uploading files is harder than setting env vars
+            firebase_json = os.getenv("FIREBASE_CREDENTIALS_JSON")
+            
+            if firebase_json:
+                import json
+                try:
+                    cred_dict = json.loads(firebase_json)
+                    cred = credentials.Certificate(cred_dict)
+                    firebase_admin.initialize_app(cred)
+                    print("[Firebase] Initialized via FIREBASE_CREDENTIALS_JSON")
+                    return
+                except Exception as json_err:
+                     print(f"[Firebase] Error parsing JSON env var: {json_err}")
+
+            # Fallback to default (File path or failure)
             cred = credentials.ApplicationDefault()
             firebase_admin.initialize_app(cred)
             print("[Firebase] Admin SDK initialized for Auth")
     except Exception as e:
         print(f"[Firebase] Error initializing App: {e}")
-        # Fallback for dev without GCP creds if needed, though Auth usually requires it.
 
 # Initialize Firebase at module import - Safe Wrapper
 try:
