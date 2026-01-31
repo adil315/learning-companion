@@ -8,10 +8,11 @@ bind = "0.0.0.0:5000"
 backlog = 2048
 
 # Worker processes
-workers = multiprocessing.cpu_count() * 2 + 1  # Recommended formula
-worker_class = "gevent"  # Async workers for I/O-bound operations (LLM calls)
+workers = 1  # Safe default for free tier (Render CLI overrides this anyway)
+threads = 2
+worker_class = "gthread"  # Standard threaded worker (no external dependencies needed)
 worker_connections = 1000
-max_requests = 1000  # Restart workers after this many requests (prevents memory leaks)
+max_requests = 100  # Restart workers more frequently on low ram
 max_requests_jitter = 50
 
 # Timeout for LLM operations (2 minutes)
