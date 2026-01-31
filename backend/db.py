@@ -176,7 +176,8 @@ def get_user(user_id: str) -> Optional[Dict[str, Any]]:
     try:
         user = db.users.find_one({"_id": user_id})
         if user:
-            user["uid"] = user["_id"] # Compat
+            user["uid"] = str(user["_id"]) # Compat
+            user["_id"] = str(user["_id"]) # Serialize if it's ObjectId (though for users it's usually str UID)
             return user
         return None
     except Exception as e:
@@ -440,6 +441,7 @@ def get_user_journeys(user_id: str) -> List[Dict[str, Any]]:
         journeys = []
         for doc in cursor:
             doc["id"] = str(doc["_id"])
+            doc["_id"] = str(doc["_id"])  # Serialize ObjectId
             journeys.append(doc)
         return journeys
     except Exception as e:
