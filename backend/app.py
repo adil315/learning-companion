@@ -70,9 +70,6 @@ CORS(app, resources={
 def root():
     return jsonify({"status": "ok", "message": "Backend Running"}), 200
 
-@app.route("/api/health", methods=["GET"])
-def health_check():
-    return jsonify({"status": "healthy", "timestamp": str(datetime.now())}), 200
 
 # =============================================================================
 # PERFORMANCE CONFIGURATION
