@@ -30,8 +30,12 @@ def initialize_firebase():
         print(f"[Firebase] Error initializing App: {e}")
         # Fallback for dev without GCP creds if needed, though Auth usually requires it.
 
-# Initialize Firebase at module import
-initialize_firebase()
+# Initialize Firebase at module import - Safe Wrapper
+try:
+    initialize_firebase()
+except Exception as e:
+    print(f"CRITICAL WARNING: Firebase Init Failed at startup: {e}")
+
 
 def get_db():
     """
