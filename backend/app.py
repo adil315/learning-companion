@@ -711,33 +711,47 @@ def save_progress():
         return jsonify({"error": "journey_id and node_id required"}), 400
     
     try:
-        db = get_firestore_client()
-        
-        # Save to progress subcollection
-        progress_ref = db.collection('users').document(user_id).collection('progress').document(f"{journey_id}_{node_id}")
-        progress_ref.set({
+        db = get_db()
+        if db is None:
+             return jsonify({"error": "Database not available"}), 500
+
+        # Save to user_progress collection
+        # Composite key logic or just query by fields
+        progress_data = {
+            'user_id': user_id,
             'journey_id': journey_id,
             'node_id': node_id,
             'completed_steps': completed_steps,
             'current_step_index': current_step_index,
-            'updated_at': datetime.utcnow().isoformat()
-        })
+            'updated_at': datetime.utcnow()
+        }
         
-        # Also update nodeProgress in the journey document for dashboard display
-        journey_ref = db.collection('users').document(user_id).collection('journeys').document(journey_id)
-        journey_doc = journey_ref.get()
+        db.user_progress.update_one(
+            {'user_id': user_id, 'journey_id': journey_id, 'node_id': node_id},
+            {'$set': progress_data},
+            upsert=True
+        )
         
-        if journey_doc.exists:
-            journey_data = journey_doc.to_dict()
-            node_progress = journey_data.get('nodeProgress', {})
-            node_progress[node_id] = {
+        # Update nodeProgress in the journey document
+        # keys in MongoDB cannot contain dots usually, but node_id is UUID so fine
+        from bson import ObjectId
+        try:
+             j_oid = ObjectId(journey_id)
+        except:
+             j_oid = journey_id
+
+        node_progress_entry = {
+            f'nodeProgress.{node_id}': {
                 'completedSteps': len(completed_steps),
                 'currentStepIndex': current_step_index
-            }
-            journey_ref.update({
-                'nodeProgress': node_progress,
-                'updatedAt': datetime.utcnow()
-            })
+            },
+            'updatedAt': datetime.utcnow()
+        }
+        
+        db.journeys.update_one(
+            {'_id': j_oid, 'user_id': user_id},
+            {'$set': node_progress_entry}
+        )
         
         print(f"[Progress] Saved progress for user {user_id}: {node_id}, steps: {len(completed_steps)}")
         return jsonify({"success": True})
@@ -757,12 +771,20 @@ def get_progress(journey_id, node_id):
     user_id = decoded_token['uid']
     
     try:
-        db = get_firestore_client()
-        progress_ref = db.collection('users').document(user_id).collection('progress').document(f"{journey_id}_{node_id}")
-        doc = progress_ref.get()
+        db = get_db()
+        if db is None:
+             return jsonify({"error": "Database not available"}), 500
+
+        doc = db.user_progress.find_one({
+            'user_id': user_id, 
+            'journey_id': journey_id, 
+            'node_id': node_id
+        })
         
-        if doc.exists:
-            return jsonify(doc.to_dict())
+        if doc:
+            # Convert ObjectId to str if needed, usually just fields
+            if '_id' in doc: doc['_id'] = str(doc['_id'])
+            return jsonify(doc)
         else:
             return jsonify({
                 'journey_id': journey_id,
@@ -794,26 +816,33 @@ def complete_journey_node(journey_id):
         return jsonify({"error": "node_id required"}), 400
     
     try:
-        db = get_firestore_client()
+        db = get_db()
+        if db is None:
+             return jsonify({"error": "Database not available"}), 500
         
-        # Find the journey document in user's journeys subcollection
-        journey_ref = db.collection('users').document(user_id).collection('journeys').document(journey_id)
-        journey_doc = journey_ref.get()
+        from bson import ObjectId
+        try:
+             j_oid = ObjectId(journey_id)
+        except:
+             j_oid = journey_id
+
+        # Atomic update to add to set (avoid duplicates)
+        result = db.journeys.update_one(
+            {'_id': j_oid, 'user_id': user_id},
+            {
+                '$addToSet': {'completedNodes': node_id},
+                '$set': {'updatedAt': datetime.utcnow()}
+            }
+        )
         
-        if not journey_doc.exists:
-            return jsonify({"error": "Journey not found"}), 404
+        if result.matched_count == 0:
+             return jsonify({"error": "Journey not found"}), 404
+             
+        # Fetch updated doc to return list (optional, or just return success)
+        updated_doc = db.journeys.find_one({'_id': j_oid})
+        completed_nodes = updated_doc.get('completedNodes', []) if updated_doc else []
         
-        journey_data = journey_doc.to_dict()
-        completed_nodes = journey_data.get('completedNodes', [])
-        
-        # Add node to completedNodes if not already present
-        if node_id not in completed_nodes:
-            completed_nodes.append(node_id)
-            journey_ref.update({
-                'completedNodes': completed_nodes,
-                'updatedAt': datetime.utcnow()
-            })
-            print(f"[Journey] Marked node {node_id} as completed in journey {journey_id}")
+        print(f"[Journey] Marked node {node_id} as completed in journey {journey_id}")
         
         return jsonify({
             "success": True,
