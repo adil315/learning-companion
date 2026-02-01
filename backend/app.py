@@ -139,7 +139,7 @@ def run_async(coro):
     """Run an async coroutine in the background event loop and wait for its result."""
     loop = get_or_create_event_loop()
     future = asyncio.run_coroutine_threadsafe(coro, loop)
-    return future.result(timeout=120)  # 2 minute timeout
+    return future.result(timeout=300)  # 5 minute timeout (increased for slow Render initialization)
 
 # Initialize the background loop on module load
 import threading
