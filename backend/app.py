@@ -121,14 +121,19 @@ _background_thread = None
 
 def _start_background_loop(loop):
     """Run the event loop in a background thread."""
+    print(f"[ASYNC] Starting background event loop thread: {threading.get_ident()}")
     asyncio.set_event_loop(loop)
-    loop.run_forever()
+    try:
+        loop.run_forever()
+    except Exception as e:
+        print(f"[ASYNC] Background loop crashed: {e}")
 
 def get_or_create_event_loop():
     """Get the background event loop, creating it if necessary."""
     global _background_loop, _background_thread
     
     if _background_loop is None or _background_loop.is_closed():
+        print("[ASYNC] Creating new event loop...")
         _background_loop = asyncio.new_event_loop()
         _background_thread = threading.Thread(target=_start_background_loop, args=(_background_loop,), daemon=True)
         _background_thread.start()
@@ -138,8 +143,18 @@ def get_or_create_event_loop():
 def run_async(coro):
     """Run an async coroutine in the background event loop and wait for its result."""
     loop = get_or_create_event_loop()
+    print(f"[ASYNC] Submitting coroutine to loop {id(loop)}...")
     future = asyncio.run_coroutine_threadsafe(coro, loop)
-    return future.result(timeout=300)  # 5 minute timeout (increased for slow Render initialization)
+    try:
+        print("[ASYNC] Waiting for result...")
+        result = future.result(timeout=300)
+        print("[ASYNC] Result received!")
+        return result
+    except Exception as e:
+        print(f"[ASYNC] Task failed/timed out: {e}")
+        # Check if loop is running
+        print(f"[ASYNC] Loop Running: {loop.is_running()}")
+        raise e
 
 # Initialize the background loop on module load
 import threading
@@ -236,11 +251,17 @@ async def run_agent_async(runner: InMemoryRunner, user_id: str, session_id: str,
 
 async def create_session_async(runner: InMemoryRunner, app_name: str, user_id: str) -> str:
     """Create a session and return the session ID."""
-    session = await runner.session_service.create_session(
-        app_name=app_name,
-        user_id=user_id
-    )
-    return session.id
+    print(f"[SESSION] Creating session for {app_name}, user {user_id}...")
+    try:
+        session = await runner.session_service.create_session(
+            app_name=app_name,
+            user_id=user_id
+        )
+        print(f"[SESSION] Session created: {session.id}")
+        return session.id
+    except Exception as e:
+        print(f"[SESSION] Creation failed: {e}")
+        raise e
 
 
 def run_agent_sync(runner: InMemoryRunner, user_id: str, message: str, app_name: str = "learning_companion") -> str:
@@ -2160,6 +2181,23 @@ Return ONLY a JSON array of steps:
 
 
 # =============================================================================
+# DEBUG ENDPOINTS
+# =============================================================================
+
+@app.route('/api/debug/async', methods=['GET'])
+def debug_async():
+    """Test if the background async loop is working."""
+    async def async_echo():
+        await asyncio.sleep(0.1)
+        return "Pong from Async Loop"
+    
+    try:
+        result = run_async(async_echo())
+        return jsonify({"status": "ok", "message": result})
+    except Exception as e:
+        return jsonify({"status": "error", "error": str(e)}), 500
+
+# =============================================================================
 # UTILITY ENDPOINTS
 # =============================================================================
 
@@ -2173,6 +2211,11 @@ def health_check():
     firebase_status = {
         "initialized": len(firebase_admin._apps) > 0,
         "project_id": "unknown"
+    }
+    
+    gemini_status = {
+        "api_key_present": bool(os.getenv("GEMINI_API_KEY")),
+        "google_api_key_present": bool(os.getenv("GOOGLE_API_KEY"))
     }
     
     try:
@@ -2189,6 +2232,7 @@ def health_check():
         "status": "healthy",
         "version": "2.2.0",
         "firebase": firebase_status,
+        "gemini": gemini_status,
         "python_version": sys.version.split()[0],
         "features": {
             "async_jobs": True,
