@@ -130,11 +130,19 @@ def _start_background_loop(loop):
         print(f"[ASYNC] Background loop crashed: {e}")
 
 def get_or_create_event_loop():
-    """Get the background event loop, creating it if necessary."""
+    """Get the background event loop, creating it if necessary and ensuring it's alive (fork-safe)."""
     global _background_loop, _background_thread
     
-    if _background_loop is None or _background_loop.is_closed():
-        print("[ASYNC] Creating new event loop...")
+    # Restart loop if it's missing, closed, or the thread died (usually after a Gunicorn fork)
+    needs_init = (
+        _background_loop is None or 
+        _background_loop.is_closed() or 
+        _background_thread is None or 
+        not _background_thread.is_alive()
+    )
+    
+    if needs_init:
+        print("[ASYNC] Initializing/Restarting background event loop...")
         _background_loop = asyncio.new_event_loop()
         _background_thread = threading.Thread(target=_start_background_loop, args=(_background_loop,), daemon=True)
         _background_thread.start()
@@ -1085,7 +1093,7 @@ def diagnostic_chat():
             
             try:
                 response_text = run_async(
-                    run_agent_async(runner, session_id, adk_session_id, contextual_input)
+                    run_agent_async(runner, session_id, adk_session_id, user_input)
                 )
             except Exception as e:
                 print(f"[ERROR] Session continuation failed: {e}")
