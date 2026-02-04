@@ -249,18 +249,24 @@ async def run_agent_async(runner: InMemoryRunner, user_id: str, session_id: str,
     return full_text
 
 
-async def create_session_async(runner: InMemoryRunner, app_name: str, user_id: str) -> str:
-    """Create a session and return the session ID."""
-    print(f"[SESSION] Creating session for {app_name}, user {user_id}...")
+async def create_session_async(agent: Agent, app_name: str, user_id: str) -> Tuple[str, InMemoryRunner]:
+    """Create a session and return (session_id, runner)."""
+    print(f"[SESSION] Initializing runner for {app_name}, user {user_id}...")
     try:
+        # Create runner inside the async loop to ensure thread affinity
+        runner = InMemoryRunner(agent=agent, app_name=app_name)
+        
+        print(f"[SESSION] Creating session via runner...")
         session = await runner.session_service.create_session(
             app_name=app_name,
             user_id=user_id
         )
         print(f"[SESSION] Session created: {session.id}")
-        return session.id
+        return session.id, runner
     except Exception as e:
         print(f"[SESSION] Creation failed: {e}")
+        import traceback
+        traceback.print_exc()
         raise e
 
 
@@ -1041,14 +1047,17 @@ def diagnostic_chat():
         # STEP 1: Initialize or Retrieve Session
         # -------------------------------------------------------------------------
         if not session_id or session_id not in active_sessions:
-            # New session - create diagnostic runner
+            # New session - create diagnostic runner via async bridge
             session_id = str(uuid.uuid4())
-            runner = InMemoryRunner(agent=diagnostic_agent, app_name="diagnostic_app")
             
-            # Use the persistent background event loop
-            adk_session_id = run_async(
-                create_session_async(runner, "diagnostic_app", session_id)
+            # Run creation in background loop, getting back ID and runner
+            adk_session_id, runner = run_async(
+                create_session_async(diagnostic_agent, "diagnostic_app", session_id)
             )
+            
+            # Now we have the runner that was created in the loop (thread-safeish usage hopes)
+            # Actually, the runner object itself is just a python object. 
+            # The critical part is that its internal services are initialized in the loop context if needed.
             
             active_sessions[session_id] = {
                 "runner": runner,
@@ -1071,10 +1080,7 @@ def diagnostic_chat():
             adk_session_id = session_data["adk_session_id"]
             topic = session_data["topic"]
             
-            print(f"[Topic Mode] Continuing session {session_id}, user said: {user_input[:50] if user_input else 'empty'}...")
-            
-            # Include topic context in the user message to help agent stay on topic
-            contextual_input = f"[Topic: {topic}] User's answer: {user_input}"
+            print(f"[Topic Mode] Continuing session {session_id} (ADK: {adk_session_id})")
             
             try:
                 response_text = run_async(
