@@ -740,21 +740,21 @@ export default function DashboardPage() {
             <main className="relative z-10 max-w-7xl mx-auto px-4 md:px-6 py-4 md:py-6">
 
                 {/* Welcome Banner - Lighter Gradient Style */}
-                <div className="mb-6 md:mb-8 p-5 md:p-8 rounded-2xl bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/20 relative overflow-hidden">
+                <div className="mb-6 md:mb-8 p-5 md:p-8 rounded-2xl bg-gradient-to-r from-purple-600 to-pink-600 relative overflow-hidden">
                     {/* Decorative elements */}
-                    <div className="absolute top-0 right-0 w-32 md:w-64 h-32 md:h-64 bg-purple-500/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
-                    <div className="absolute bottom-0 left-1/2 w-24 md:w-48 h-24 md:h-48 bg-pink-500/5 rounded-full blur-2xl"></div>
+                    <div className="absolute top-0 right-0 w-32 md:w-64 h-32 md:h-64 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+                    <div className="absolute bottom-0 left-1/2 w-24 md:w-48 h-24 md:h-48 bg-pink-400/20 rounded-full blur-2xl"></div>
 
                     <div className="relative z-10">
-                        <h1 className="text-2xl md:text-4xl font-bold mb-2 md:mb-3 bg-gradient-to-r from-purple-200 to-pink-200 bg-clip-text text-transparent">
+                        <h1 className="text-2xl md:text-4xl font-bold mb-2 md:mb-3 text-white">
                             Welcome back, {userData?.displayName?.split(' ')[0] || 'Learner'}!
                         </h1>
-                        <p className="text-purple-200/70 text-base md:text-lg mb-4 md:mb-6">
+                        <p className="text-purple-50 text-base md:text-lg mb-4 md:mb-6">
                             Ready to continue your learning adventure? Let's conquer new skills!
                         </p>
                         <button
                             onClick={() => setShowCreateModal(true)}
-                            className="inline-flex items-center gap-2 px-5 md:px-6 py-2.5 md:py-3 bg-purple-500/10 hover:bg-purple-500/20 text-white rounded-xl font-medium border border-purple-500/30 transition-all shadow-lg hover:shadow-xl touch-target text-sm md:text-base"
+                            className="inline-flex items-center gap-2 px-5 md:px-6 py-2.5 md:py-3 bg-gray-900/80 hover:bg-gray-900 text-white rounded-xl font-medium transition-all shadow-lg hover:shadow-xl touch-target text-sm md:text-base"
                         >
                             Start a New Journey
                             <ChevronRight className="w-4 h-4 md:w-5 md:h-5" />
