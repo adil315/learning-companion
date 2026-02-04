@@ -282,8 +282,12 @@ async def create_session_async(agent: Agent, app_name: str, user_id: str) -> Tup
 def run_agent_sync(runner: InMemoryRunner, user_id: str, message: str, app_name: str = "learning_companion") -> str:
     """Synchronous wrapper to run agent. Works in both main thread and background threads."""
     async def _run():
-        # Create session first
-        session_id = await create_session_async(runner, app_name, user_id)
+        # Create session directly using runner's service
+        session = await runner.session_service.create_session(
+            app_name=app_name,
+            user_id=user_id
+        )
+        session_id = session.id
         print(f"[DEBUG] Created session: {session_id}")
         
         # Run the agent
