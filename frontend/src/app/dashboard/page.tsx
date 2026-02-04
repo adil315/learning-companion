@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
 import {
     Book, Trophy, Zap, BookOpen, ChevronRight, Plus,
@@ -152,6 +153,8 @@ export default function DashboardPage() {
                     const data = await response.json();
                     setDueCards(data.cards || []);
                     setDueCardCount(data.due_count || 0);
+                } else {
+                    console.warn('Flashcard fetch failed', response.status);
                 }
             } catch (error) {
                 console.error('Error fetching flashcards:', error);
@@ -565,7 +568,14 @@ export default function DashboardPage() {
             <header className="relative z-20 border-b border-purple-500/10">
                 <div className="max-w-7xl mx-auto px-4 md:px-6 py-3 md:py-4 flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                        <Book className="w-6 h-6 md:w-7 md:h-7 text-purple-400" />
+                        <div className="relative w-8 h-8 md:w-10 md:h-10">
+                            <Image
+                                src="/logo-v2.png"
+                                alt="Learning Companion Logo"
+                                fill
+                                className="object-contain"
+                            />
+                        </div>
                         <span className="text-lg md:text-xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
                             Learning Companion
                         </span>
@@ -776,6 +786,11 @@ export default function DashboardPage() {
                                 <p>Backend URL: <span className="text-yellow-400">{debugInfo.url}</span></p>
                                 <p>Auth Token: <span className={debugInfo.tokenStatus === 'Valid' ? 'text-green-400' : 'text-red-400'}>{debugInfo.tokenStatus}</span></p>
                                 <p>Env Var: {process.env.NEXT_PUBLIC_BACKEND_URL ? 'Set' : 'Missing'}</p>
+                                {debugInfo.error && (
+                                    <p className="mt-2 text-red-400 font-bold border-t border-gray-700 pt-2">
+                                        ERROR: {debugInfo.error}
+                                    </p>
+                                )}
                             </div>
                         </div>
                     ) : (
