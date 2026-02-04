@@ -155,7 +155,7 @@ function StickyHeader({
         <div className="flex items-center gap-2">
           <div className="relative w-8 h-8">
             <Image
-              src="/logo-v2.png"
+              src="/logo.svg"
               alt="Learning Companion Logo"
               fill
               className="object-contain"
@@ -728,7 +728,7 @@ function Footer() {
         <div className="flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-2">
             <div className="relative w-6 h-6">
-              <Image src="/logo.png" alt="Logo" fill className="object-contain" />
+              <Image src="/logo.svg" alt="Logo" fill className="object-contain" />
             </div>
             <span className="text-white font-medium">Learning Companion</span>
           </div>
