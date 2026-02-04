@@ -12,6 +12,7 @@ Performance optimizations:
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from google.adk.runners import InMemoryRunner
+from google.adk.agents import Agent
 from google.genai import types
 import uuid
 import os
@@ -22,7 +23,7 @@ import threading
 import sys
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, Tuple
 
 # Performance imports
 from cachetools import TTLCache
