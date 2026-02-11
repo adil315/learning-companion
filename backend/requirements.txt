@@ -8,6 +8,8 @@ firebase-admin
 requests>=2.25.0
 pymongo>=4.0.0
 dnspython>=2.0.0
+duckduckgo-search
+youtube-search-python
 
 # Production server dependencies
 waitress>=3.0.0          # Windows-compatible WSGI server
