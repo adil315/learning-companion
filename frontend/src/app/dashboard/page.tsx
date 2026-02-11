@@ -88,30 +88,47 @@ export default function DashboardPage() {
         }
     }, [user, loading, router]);
 
-    // Fetch user's journeys
+    // Consolidated Fetch: Journeys, Stats, Usage, Flashcards
     useEffect(() => {
-        const fetchJourneys = async () => {
+        const fetchDashboardData = async () => {
             if (!user) return;
 
             try {
                 const token = await user.getIdToken();
-                const response = await fetch(`${BACKEND_URL}/api/user/journeys`, {
+                const response = await fetch(`${BACKEND_URL}/api/user/dashboard`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
 
                 if (response.ok) {
                     const data = await response.json();
-                    setJourneys(data.journeys || []);
+
+                    // Update all dashboard states at once
+                    if (data.journeys) setJourneys(data.journeys);
+                    if (data.usage) setUserUsage(data.usage);
+
+                    if (data.due_cards) setDueCards(data.due_cards);
+                    if (data.flashcard_stats) {
+                        setDueCardCount(data.flashcard_stats.due || 0);
+                    } else if (data.due_cards) {
+                        setDueCardCount(data.due_cards.length);
+                    }
+
+                    // If backend return profile data, we could potentially update AuthContext here,
+                    // but usually refreshUserData() handles it if needed.
                 }
             } catch (error) {
-                console.error('Error fetching journeys:', error);
+                console.error('Error fetching dashboard data:', error);
             } finally {
                 setLoadingJourneys(false);
             }
         };
 
         if (user) {
-            fetchJourneys();
+            fetchDashboardData();
+
+            // Periodically refresh usage (already separate below, or we could bulk refresh)
+            const interval = setInterval(fetchDashboardData, 300000); // Bulk refresh every 5 mins
+            return () => clearInterval(interval);
         }
     }, [user]);
 
@@ -138,38 +155,11 @@ export default function DashboardPage() {
         }
     }, [user]);
 
-    // Fetch due flashcards
+    // Poll for usage updates periodically (legacy - consolidated above handles most cases)
     useEffect(() => {
-        const fetchDueCards = async () => {
-            if (!user) return;
+        if (!user) return;
 
-            try {
-                const token = await user.getIdToken();
-                const response = await fetch(`${BACKEND_URL}/api/flashcards/due`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-
-                if (response.ok) {
-                    const data = await response.json();
-                    setDueCards(data.cards || []);
-                    setDueCardCount(data.due_count || 0);
-                } else {
-                    console.warn('Flashcard fetch failed', response.status);
-                }
-            } catch (error) {
-                console.error('Error fetching flashcards:', error);
-            }
-        };
-
-        if (user) {
-            fetchDueCards();
-        }
-    }, [user]);
-
-    // Fetch user usage stats
-    useEffect(() => {
         const fetchUsage = async () => {
-            if (!user) return;
             try {
                 const token = await user.getIdToken();
                 const response = await fetch(`${BACKEND_URL}/api/user/usage`, {
@@ -184,12 +174,8 @@ export default function DashboardPage() {
             }
         };
 
-        if (user) {
-            fetchUsage();
-            // Poll for usage updates periodically
-            const interval = setInterval(fetchUsage, 60000); // Every minute
-            return () => clearInterval(interval);
-        }
+        const interval = setInterval(fetchUsage, 60000); // Every minute
+        return () => clearInterval(interval);
     }, [user]);
 
     const handleReviewCard = async (cardId: string, quality: number) => {

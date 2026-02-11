@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import Script from 'next/script';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   Book, ChevronRight, ChevronDown, BookOpen,
@@ -151,7 +152,7 @@ function StickyHeader({
     <header
       className={`fixed top-0 left-0 right-0 z-50 sticky-header ${isScrolled ? 'scrolled' : ''}`}
     >
-      <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
+      <nav className="max-w-[1550px] mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="relative w-8 h-8">
             <Image
@@ -190,15 +191,29 @@ function HeroSection({
   onTryNow: () => void;
 }) {
   return (
-    <section className="relative pt-32 pb-20 px-4 sm:px-6 lg:px-8 overflow-hidden">
-      {/* Background gradient orbs */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-indigo-600/20 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 right-1/4 w-80 h-80 bg-purple-600/15 rounded-full blur-3xl" />
+    <section className="relative pt-32 pb-20 px-4 sm:px-6 lg:px-12 overflow-hidden min-h-[600px] flex items-center">
+      {/* Unicorn Studio Background Animation */}
+      <div
+        data-us-project="tS0yugDpZuXaUvnM1ytq"
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          zIndex: 0,
+          opacity: 0.6
+        }}
+      ></div>
+
+      {/* Background gradient orbs (complementary) */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-indigo-600/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 right-1/4 w-80 h-80 bg-purple-600/10 rounded-full blur-3xl" />
       </div>
 
-      <div className="max-w-7xl mx-auto relative">
-        <div className="grid lg:grid-cols-2 gap-12 items-center">
+      <div className="max-w-[1550px] w-full mx-auto relative px-4 sm:px-6 lg:px-8">
+        <div className="grid lg:grid-cols-2 gap-24 items-center">
           {/* Left: Copy */}
           <div className="text-center lg:text-left">
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-tight mb-6 animate-fade-in-up">
@@ -724,7 +739,7 @@ function FinalCTASection({ onGetStarted }: { onGetStarted: () => void }) {
 function Footer() {
   return (
     <footer className="py-12 px-4 sm:px-6 lg:px-8 border-t border-white/10">
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-[1550px] mx-auto">
         <div className="flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-2">
             <div className="relative w-6 h-6">
@@ -807,6 +822,28 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen bg-[#0a0015] text-white">
+      <Script id="unicorn-studio-init" strategy="afterInteractive">
+        {`
+          !function(){
+            var u=window.UnicornStudio;
+            if(u&&u.init){
+              if(document.readyState==="loading"){
+                document.addEventListener("DOMContentLoaded",function(){u.init()})
+              }else{u.init()}
+            }else{
+              window.UnicornStudio={isInitialized:!1};
+              var i=document.createElement("script");
+              i.src="https://cdn.jsdelivr.net/gh/hiunicornstudio/unicornstudio.js@v2.0.5/dist/unicornStudio.umd.js";
+              i.onload=function(){
+                if(document.readyState==="loading"){
+                  document.addEventListener("DOMContentLoaded",function(){UnicornStudio.init()})
+                }else{UnicornStudio.init()}
+              };
+              (document.head||document.body).appendChild(i)
+            }
+          }();
+        `}
+      </Script>
       <StickyHeader isScrolled={isScrolled} onGetStarted={handleGetStarted} />
 
       <main>

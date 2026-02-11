@@ -94,6 +94,7 @@ limiter = Limiter(
 user_cache = TTLCache(maxsize=100, ttl=300)  # Reduced from 1000
 badge_cache = TTLCache(maxsize=10, ttl=3600)
 lesson_cache = TTLCache(maxsize=50, ttl=1800)  # Reduced from 500
+dashboard_cache = TTLCache(maxsize=100, ttl=60) # Cache dashboard for 60 seconds
 
 # Thread pool for background jobs
 # CRITICAL: Reduced to 2 workers to prevent OOM on Render Free Tier
@@ -554,6 +555,53 @@ def get_usage():
     usage = get_user_usage(user_id)
     
     return jsonify(usage)
+
+
+@app.route('/api/user/dashboard', methods=['GET'])
+def get_dashboard_data():
+    """
+    Consolidated endpoint for dashboard initialization.
+    Returns profile, journeys, usage, and flashcard stats in a single call.
+    Uses caching to improve performance.
+    """
+    decoded_token, error = verify_firebase_token(request)
+    
+    if error:
+        return jsonify({"error": error}), 401
+    
+    user_id = decoded_token['uid']
+    
+    # Check cache
+    if user_id in dashboard_cache:
+        print(f"[CACHE] Serving dashboard data for user {user_id}")
+        return jsonify(dashboard_cache[user_id])
+    
+    try:
+        # Fetch all data components
+        user_data = get_user(user_id)
+        journeys = get_user_journeys(user_id)
+        usage = get_user_usage(user_id)
+        due_cards = get_due_flashcards(user_id)
+        flashcard_stats = get_flashcard_stats(user_id)
+        
+        response_data = {
+            "user": user_data,
+            "journeys": journeys,
+            "usage": usage,
+            "due_cards": due_cards,
+            "flashcard_stats": flashcard_stats,
+            "server_time": datetime.utcnow().isoformat()
+        }
+        
+        # Store in cache
+        dashboard_cache[user_id] = response_data
+        
+        return jsonify(response_data)
+    except Exception as e:
+        print(f"[ERROR] Failed to fetch dashboard data: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
 
 
 @app.route('/api/subscription/pricing', methods=['GET'])

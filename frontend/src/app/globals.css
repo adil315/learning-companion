@@ -254,6 +254,24 @@ body {
   backdrop-filter: blur(12px);
 }
 
+/* 3D Transform Utilities for Flashcards */
+.perspective-1000 {
+  perspective: 1000px;
+}
+
+.transform-style-3d {
+  transform-style: preserve-3d;
+}
+
+.backface-hidden {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.rotate-y-180 {
+  transform: rotateY(180deg);
+}
+
 /* Before/After visual styles */
 .chaos-document {
   filter: blur(1px);
@@ -1151,4 +1169,15 @@ body {
     transform: none !important;
     filter: none !important;
   }
+}
+
+/* Hide Unicorn Studio Watermark */
+[class*="unicorn-studio-link"],
+[class*="us-watermark"],
+a[href*="unicorn.studio"],
+.us-watermark {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  opacity: 0 !important;
 }

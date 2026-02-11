@@ -105,31 +105,21 @@ export default function FlashcardReview({ cards, onClose, onReview, onComplete }
                     onClick={handleFlip}
                 >
                     <div
-                        className={`relative w-full min-h-[180px] md:min-h-[200px] transition-transform duration-500 transform-style-3d ${isFlipped ? 'rotate-y-180' : ''
-                            }`}
-                        style={{
-                            transformStyle: 'preserve-3d',
-                            transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)',
-                        }}
+                        className={`relative w-full min-h-[180px] md:min-h-[200px] transition-transform duration-500 transform-style-3d ${isFlipped ? 'rotate-y-180' : ''}`}
                     >
                         {/* Front */}
                         <div
-                            className="absolute inset-0 p-4 md:p-6 bg-gradient-to-br from-purple-600/20 to-pink-600/20 border border-purple-500/30 rounded-xl flex flex-col justify-center items-center text-center"
-                            style={{ backfaceVisibility: 'hidden' }}
+                            className="absolute inset-0 p-4 md:p-6 bg-gradient-to-br from-purple-900 via-purple-800 to-pink-900 border border-purple-500/50 rounded-xl flex flex-col justify-center items-center text-center backface-hidden"
                         >
-                            <p className="text-base md:text-lg text-white leading-relaxed">{currentCard?.front}</p>
+                            <p className="text-base md:text-lg text-white font-medium leading-relaxed">{currentCard?.front}</p>
                             <p className="mt-4 text-sm text-purple-300/70">Tap to reveal answer</p>
                         </div>
 
                         {/* Back */}
                         <div
-                            className="absolute inset-0 p-4 md:p-6 bg-gradient-to-br from-green-600/20 to-emerald-600/20 border border-green-500/30 rounded-xl flex flex-col justify-center items-center text-center"
-                            style={{
-                                backfaceVisibility: 'hidden',
-                                transform: 'rotateY(180deg)',
-                            }}
+                            className="absolute inset-0 p-4 md:p-6 bg-gradient-to-br from-green-900 via-emerald-900 to-teal-900 border border-green-500/50 rounded-xl flex flex-col justify-center items-center text-center backface-hidden rotate-y-180"
                         >
-                            <p className="text-base md:text-lg text-white leading-relaxed">{currentCard?.back}</p>
+                            <p className="text-base md:text-lg text-white font-medium leading-relaxed">{currentCard?.back}</p>
                         </div>
                     </div>
                 </div>
