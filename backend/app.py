@@ -1762,71 +1762,33 @@ def api_generate_lesson():
             
         use_generation(user_id)
         
-        # Use direct Gemini API for more reliable generation
-        import google.generativeai as genai
-        import os
-        
-        genai.configure(api_key=os.getenv('GEMINI_API_KEY'))
-        model = genai.GenerativeModel('gemini-2.0-flash')
-        
-        prompt = f"""You are an expert educator. Generate an engaging lesson on: **{title}**
+        # Use Lesson Agent for high-quality content with search tools
+        try:
+            runner = InMemoryRunner(agent=lesson_agent, app_name="lesson_gen_app")
+            prompt = f"Topic: {title}. User Level: {user_level}. Context: {context}"
+            
+            content = run_agent_sync(runner, user_id, prompt, "lesson_gen_app")
+            
+            # Clean up markdown code blocks if present
+            if content.startswith('```markdown'):
+                content = content[len('```markdown'):].strip()
+            elif content.startswith('```'):
+                content = content[3:].strip()
+            
+            if content.endswith('```'):
+                content = content[:-3].strip()
+                
+        except Exception as agent_error:
+            print(f"[Lesson] Agent failed, falling back to basic generation: {agent_error}")
+            # Fallback to direct Gemini if agent fails
+            import google.generativeai as genai
+            import os
+            genai.configure(api_key=os.getenv('GEMINI_API_KEY'))
+            model = genai.GenerativeModel('gemini-2.0-flash')
+            fallback_prompt = f"Expert Educator: Generate a lesson on {title} for level {user_level}. Include Key Concepts and Examples. Level: {user_level}."
+            response = model.generate_content(fallback_prompt)
+            content = response.text.strip()
 
-User Level: {user_level}
-Context: {context}
-
-Create a well-structured lesson with:
-
-## 🎯 Introduction
-Hook the learner with why this topic matters (2-3 sentences)
-
-## 📚 Key Concepts
-- Explain the main ideas clearly
-- Use bullet points for easy reading
-- Include analogies for complex topics
-
-## 💡 Examples
-- Provide 2-3 concrete examples
-- Include code snippets if applicable
-- Show real-world applications
-
-## 🔑 Key Takeaways
-- 3-5 important points to remember
-
-Use emojis to make it engaging. Format in clean Markdown."""
-
-        response = model.generate_content(prompt)
-        content = response.text.strip()
-        
-        # Clean up markdown code blocks if present
-        if content.startswith('```markdown'):
-            content = content[len('```markdown'):].strip()
-        if content.startswith('```'):
-            content = content[3:].strip()
-        if content.endswith('```'):
-            content = content[:-3].strip()
-        
-        # Validate content is not empty
-        if not content or len(content) < 50:
-            print(f"[Lesson] Warning: Generated content too short ({len(content) if content else 0} chars)")
-            # Generate fallback content
-            content = f"""## 🎯 {title}
-
-### Introduction
-Welcome to this lesson on **{title}**! This is designed for {user_level.lower()} learners.
-
-### 📚 Overview
-{context if context else f'In this lesson, we will explore the fundamentals of {title}.'}
-
-### 💡 Key Points
-- Understanding the basics of {title}
-- Common applications and use cases
-- Best practices to keep in mind
-
-### 🔑 Summary
-{title} is an important topic that forms the foundation for more advanced concepts. Take your time to understand each concept before moving forward.
-
-*Tip: Try to relate these concepts to real-world examples you encounter daily!*
-"""
         
         print(f"[Lesson] Generated {len(content)} characters of content")
         
@@ -1919,19 +1881,29 @@ def tutor_chat():
     try:
         # Check for existing session or create new one
         if user_id not in tutor_sessions:
-            # Create new tutor runner for this user
-            runner = InMemoryRunner(agent=tutor_agent, app_name="tutor_app")
-            
-            # Create session using the background event loop
-            adk_session_id = run_async(
-                create_session_async(runner, "tutor_app", user_id)
+            # Create new tutor session via async bridge
+            # Note: create_session_async returns (session_id, runner)
+            adk_session_id, runner = run_async(
+                create_session_async(tutor_agent, "tutor_app", user_id)
             )
             
             tutor_sessions[user_id] = {
                 "runner": runner,
                 "adk_session_id": adk_session_id
             }
-            print(f"[Tutor] Created new session for user {user_id}")
+            print(f"[Tutor] Created new session for user {user_id} (ADK: {adk_session_id})")
+            
+            # Inject existing history for context if available
+            history = get_tutor_history(user_id, limit=5)
+            if history:
+                print(f"[Tutor] Injecting {len(history)} past messages for context...")
+                context_prompt = "Here is our recent conversation history for your context:\n"
+                for msg in history:
+                    context_prompt += f"{msg['role'].capitalize()}: {msg['content']}\n"
+                context_prompt += "\nNow, please respond to my latest message below."
+                
+                # Send context to agent (we don't need the response text here, just seeding)
+                run_async(run_agent_async(runner, user_id, adk_session_id, context_prompt))
         
         session_data = tutor_sessions[user_id]
         runner = session_data["runner"]

@@ -5,18 +5,24 @@ Answers questions, explains concepts, and helps with coding problems.
 
 from google.adk.agents import Agent
 from google.adk.models.google_llm import Gemini
+from tools.search_tools import web_search, youtube_search
 
 # Create the AI Tutor Agent
 tutor_agent = Agent(
     name="ai_tutor",
     model=Gemini(model="gemini-2.0-flash"),
+    tools=[web_search, youtube_search],
     output_key="tutor_response",
-    instruction="""You are a friendly, knowledgeable AI Tutor for a personalized learning platform called LearnQuest.
+    instruction="""You are a friendly, knowledgeable AI Tutor for a personalized learning platform called Learning Companion.
 
 ## YOUR ROLE
 You are the user's personal learning companion. Help them understand concepts, answer their questions, and guide them through their learning journey.
 
 ## GUIDELINES
+
+### Research & Enrichment
+- If a user asks about a complex or recent topic, use `web_search` to provide up-to-date and accurate information.
+- Use `youtube_search` to find helpful visual explanations or tutorials if applicable.
 
 ### Communication Style
 - Be warm, encouraging, and supportive
